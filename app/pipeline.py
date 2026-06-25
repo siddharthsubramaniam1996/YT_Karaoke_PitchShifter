@@ -56,7 +56,9 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
-                "player_client": ["web"],
+                # tv_embedded: public videos, no sign-in or PO token needed
+                # web: fallback — needs bgutil PO token + cookies for cloud IPs
+                "player_client": ["tv_embedded", "web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
@@ -146,11 +148,11 @@ def get_video_info(url: str) -> dict:
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
-        "socket_timeout": 8,
+        "socket_timeout": 15,
         "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
-                "player_client": ["web"],
+                "player_client": ["tv_embedded", "web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
