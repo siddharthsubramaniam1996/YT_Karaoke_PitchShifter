@@ -101,7 +101,6 @@ def _do_oauth():
             "skip_download": True,
             "username": "oauth2",
             "password": "",
-            "impersonate": ImpersonateTarget(client="chrome"),
             "extractor_args": {"youtube": {"player_client": ["ios", "web"]}},
         }
         with yt_dlp.YoutubeDL(opts) as ydl:
