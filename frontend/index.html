@@ -482,6 +482,7 @@ urlEl.addEventListener('input', () => {
   clearTimeout(infoId);
   const v = urlEl.value.trim();
   if (!v.includes('youtube') && !v.includes('youtu.be')) { hidePreview(); return; }
+  document.getElementById('go').disabled = false;
   infoId = setTimeout(() => fetchInfo(v), 650);
 });
 

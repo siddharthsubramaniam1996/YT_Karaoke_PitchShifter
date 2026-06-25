@@ -1,4 +1,5 @@
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 yt-dlp
+curl-cffi
 aiofiles==23.2.1

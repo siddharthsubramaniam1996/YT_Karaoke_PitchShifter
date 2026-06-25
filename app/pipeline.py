@@ -33,8 +33,9 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "merge_output_format": "mp4",
         "outtmpl": os.path.join(tmp_dir, "src.%(ext)s"),
         "noplaylist": True,
-        "max_filesize": 500 * 1024 * 1024,  # 500 MB hard cap
+        "max_filesize": 500 * 1024 * 1024,
         "progress_hooks": [progress_hook],
+        "impersonate": "chrome",
         "extractor_args": {
             "youtube": {
                 "getpot_bgutil_baseurl": [BGUTIL_URL]
@@ -108,6 +109,8 @@ def get_video_info(url: str) -> dict:
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
+        "socket_timeout": 8,
+        "impersonate": "chrome",
         "extractor_args": {
             "youtube": {
                 "getpot_bgutil_baseurl": [BGUTIL_URL]
