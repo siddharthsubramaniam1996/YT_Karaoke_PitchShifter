@@ -54,11 +54,10 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "max_filesize": 500 * 1024 * 1024,
         "progress_hooks": [progress_hook],
         "impersonate": ImpersonateTarget(client="chrome"),
+        "remote_components": {"ejs:github"},  # n-challenge solver script
         "extractor_args": {
             "youtube": {
-                # tv_embedded: public videos, no sign-in or PO token needed
-                # web: fallback — needs bgutil PO token + cookies for cloud IPs
-                "player_client": ["tv_embedded", "web"],
+                "player_client": ["web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
@@ -150,9 +149,10 @@ def get_video_info(url: str) -> dict:
         "skip_download": True,
         "socket_timeout": 15,
         "impersonate": ImpersonateTarget(client="chrome"),
+        "remote_components": {"ejs:github"},
         "extractor_args": {
             "youtube": {
-                "player_client": ["tv_embedded", "web"],
+                "player_client": ["web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
