@@ -55,6 +55,7 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "progress_hooks": [progress_hook],
         "impersonate": ImpersonateTarget(client="chrome"),
         "remote_components": {"ejs:github"},  # n-challenge solver script
+        "js_runtimes": {"node": {}},           # use Node.js for n-challenge
         "extractor_args": {
             "youtube": {
                 "player_client": ["web"],
@@ -150,6 +151,7 @@ def get_video_info(url: str) -> dict:
         "socket_timeout": 15,
         "impersonate": ImpersonateTarget(client="chrome"),
         "remote_components": {"ejs:github"},
+        "js_runtimes": {"node": {}},
         "extractor_args": {
             "youtube": {
                 "player_client": ["web"],
