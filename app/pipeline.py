@@ -47,7 +47,7 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
     tmp_dir = get_tmp_dir(job_id)
 
     ydl_opts = {
-        "format": "bv*+ba/b",
+        "format": "bestvideo+bestaudio/bestvideo/best",
         "merge_output_format": "mp4",
         "outtmpl": os.path.join(tmp_dir, "src.%(ext)s"),
         "noplaylist": True,
