@@ -21,12 +21,6 @@ def get_tmp_dir(job_id: str) -> str:
 
 
 def download_video(url: str, job_id: str, progress_hook) -> str:
-    """
-    Download best video+audio merged to src.mp4.
-    bgutil-pot supplies BotGuard PO tokens so YouTube does not
-    block downloads from cloud/HF Spaces IP addresses.
-    Returns path to the downloaded src.mp4.
-    """
     tmp_dir = get_tmp_dir(job_id)
 
     ydl_opts = {
@@ -39,7 +33,7 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
-                "getpot_bgutil_baseurl": [BGUTIL_URL]
+                "player_client": ["ios", "web"],
             }
         },
     }
@@ -114,7 +108,7 @@ def get_video_info(url: str) -> dict:
         "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
-                "getpot_bgutil_baseurl": [BGUTIL_URL]
+                "player_client": ["ios", "web"],
             }
         },
     }
