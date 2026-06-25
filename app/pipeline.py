@@ -59,7 +59,6 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "extractor_args": {
             "youtube": {
                 "player_client": ["web"],
-                "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
         **_auth_opts(),
@@ -155,7 +154,6 @@ def get_video_info(url: str) -> dict:
         "extractor_args": {
             "youtube": {
                 "player_client": ["web"],
-                "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
         **_auth_opts(),
