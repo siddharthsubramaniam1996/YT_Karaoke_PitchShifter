@@ -498,7 +498,7 @@ async function fetchInfo(url) {
     document.getElementById('preview-sub').textContent = d.channel + ' · ' + d.duration;
     document.getElementById('preview').style.display = 'block';
     document.getElementById('go').disabled = false;
-  } catch(e) { hidePreview(); setErr(e.message); }
+  } catch(e) { hidePreview(); setErr(e.message); document.getElementById('go').disabled = false; }
 }
 
 function hidePreview() {

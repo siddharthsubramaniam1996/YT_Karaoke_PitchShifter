@@ -103,9 +103,18 @@ def pitch_shift(src_path: str, semitones: int, fmt: str, job_id: str) -> str:
 def get_video_info(url: str) -> dict:
     """
     Fetch title, thumbnail, duration, and channel without downloading.
-    Used by the /info endpoint to populate the song preview card.
+    Uses bgutil-pot so the metadata request isn't bot-blocked on cloud IPs.
     """
-    with yt_dlp.YoutubeDL({"quiet": True, "skip_download": True}) as ydl:
+    ydl_opts = {
+        "quiet": True,
+        "skip_download": True,
+        "extractor_args": {
+            "youtube": {
+                "getpot_bgutil_baseurl": [BGUTIL_URL]
+            }
+        },
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         dur = int(info.get("duration") or 0)
         mins, secs = divmod(dur, 60)
