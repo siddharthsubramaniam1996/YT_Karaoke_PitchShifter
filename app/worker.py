@@ -3,6 +3,7 @@ import shutil
 import threading
 import time
 import queue
+import traceback
 from app.pipeline import download_video, pitch_shift, TMP_BASE
 
 _jobs: dict[str, dict] = {}
@@ -70,7 +71,7 @@ def _process(job_id: str):
         _update(job_id, status="done", progress=100, output_path=out)
 
     except Exception as e:
-        _update(job_id, status="error", error=str(e))
+        _update(job_id, status="error", error=str(e) or repr(e) or traceback.format_exc()[-1000:])
 
 
 def _loop():
