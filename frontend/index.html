@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Key Shifter">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<script>try{var t=localStorage.getItem('ks-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<title>Key Shifter</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+[data-theme="dark"]{
+  --bg:#000;--s1:#1c1c1e;--s2:#2c2c2e;--s3:#3a3a3c;
+  --sep:rgba(84,84,88,.65);
+  --t1:#fff;--t2:rgba(235,235,245,.6);--t3:rgba(235,235,245,.22);
+  --accent:#ff375f;--success:#30d158;--danger:#ff453a;
+  color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#f2f2f7;--s1:#fff;--s2:#f2f2f7;--s3:#e5e5ea;
+  --sep:rgba(60,60,67,.29);
+  --t1:#000;--t2:rgba(60,60,67,.6);--t3:rgba(60,60,67,.22);
+  --accent:#ff2d55;--success:#34c759;--danger:#ff3b30;
+  color-scheme:light;
+}
+
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--t1);
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+  /* Leaves room for fixed mini-player + iPhone home indicator */
+  padding-bottom:calc(80px + env(safe-area-inset-bottom));
+  transition:background-color .22s,color .22s;
+}
+.wrap{width:100%;max-width:430px;padding:0 16px}
+
+/* Header */
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;padding:52px 0 28px}
+.hdr-left h1{font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--t1)}
+.hdr-left p{font-size:14px;color:var(--t2);margin-top:4px}
+.theme-btn{
+  width:34px;height:34px;border-radius:50%;background:var(--s2);border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-bottom:2px;transition:background-color .22s;
+}
+.theme-btn svg{color:var(--t2)}
+
+/* Section */
+.sec{margin-bottom:10px}
+.sec-lbl{font-size:13px;color:var(--t2);padding:0 4px;margin-bottom:6px}
+.card{background:var(--s1);border-radius:12px;overflow:hidden;transition:background-color .22s}
+
+/* URL */
+.url-row{display:flex;align-items:center;gap:10px;padding:14px 16px}
+.url-row svg{color:var(--t3);flex-shrink:0}
+input[type="url"]{
+  flex:1;min-width:0;background:transparent;border:none;outline:none;
+  color:var(--t1);font-family:inherit;font-size:16px;
+  caret-color:var(--accent);padding:0;
+}
+input[type="url"]::placeholder{color:var(--t3)}
+
+/* Ambient preview */
+#preview{
+  display:none;border-top:.5px solid var(--sep);
+  position:relative;overflow:hidden;
+  animation:slideIn .3s cubic-bezier(.25,1,.5,1) both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.art-bg{
+  position:absolute;inset:0;background-size:cover;background-position:center;
+  filter:blur(40px) brightness(.28) saturate(1.5);
+}
+[data-theme="light"] .art-bg{filter:blur(40px) brightness(.45) saturate(1.3)}
+.preview-inner{position:relative;z-index:1;display:flex;align-items:center;gap:12px;padding:14px 16px}
+#thumb{width:58px;height:43px;border-radius:7px;object-fit:cover;flex-shrink:0}
+.song-meta{min-width:0}
+#preview-title{
+  font-size:14px;font-weight:600;color:#fff;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+#preview-sub{font-size:12px;color:rgba(255,255,255,.55);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#err{display:none;font-size:13px;color:var(--danger);padding:10px 16px 14px;border-top:.5px solid var(--sep)}
+
+/* Semitone strip */
+.st-outer{overflow-x:auto;overflow-y:visible;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;padding:14px 0 14px 16px}
+.st-outer::-webkit-scrollbar{display:none}
+.st-row{display:flex;gap:7px;padding-right:16px}
+.st-btn{
+  flex-shrink:0;min-width:44px;height:34px;padding:0 13px;
+  border-radius:17px;background:var(--s2);border:none;
+  color:var(--t1);font-family:inherit;font-size:14px;font-weight:500;
+  cursor:pointer;transition:background-color .15s,color .15s,transform .1s;
+  -webkit-user-select:none;user-select:none;
+}
+.st-btn:active{transform:scale(.93)}
+.st-btn.on{background:var(--accent);color:#fff}
+.st-foot{border-top:.5px solid var(--sep);padding:10px 16px 13px;font-size:13px;color:var(--t2)}
+
+/* Segmented control */
+.seg-wrap{padding:8px}
+.seg{display:flex;background:var(--s2);border-radius:9px;padding:2px;gap:2px}
+.seg-btn{
+  flex:1;padding:8px 4px;border:none;border-radius:7px;
+  background:transparent;color:var(--t1);font-family:inherit;
+  font-size:14px;font-weight:500;cursor:pointer;
+  line-height:1.25;transition:background-color .15s;
+  -webkit-user-select:none;user-select:none;
+}
+.seg-btn small{display:block;font-size:11px;font-weight:400;color:var(--t2);margin-top:1px}
+.seg-btn.on{background:var(--s1)}
+[data-theme="dark"] .seg-btn.on{box-shadow:0 1px 4px rgba(0,0,0,.55)}
+[data-theme="light"] .seg-btn.on{box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 .5px rgba(0,0,0,.04)}
+
+/* Go button */
+#go{
+  display:block;width:100%;padding:16px;border:none;border-radius:12px;
+  background:var(--accent);color:#fff;font-family:inherit;
+  font-size:17px;font-weight:600;letter-spacing:-.01em;
+  cursor:pointer;margin:8px 0;
+  transition:opacity .2s,transform .12s,background-color .22s;
+}
+#go:not(:disabled):active{transform:scale(.97)}
+#go:disabled{opacity:.28;cursor:not-allowed}
+
+/* Progress card */
+#prog-card{display:none}
+.prog-inner{padding:26px 20px 22px;display:flex;flex-direction:column;align-items:center}
+.eq{display:flex;align-items:flex-end;gap:3px;height:26px;margin-bottom:16px}
+.eq span{width:3px;border-radius:2px;background:var(--accent);animation:eq .9s ease-in-out infinite}
+.eq span:nth-child(1){height:10px;animation-delay:0s}
+.eq span:nth-child(2){height:20px;animation-delay:.14s}
+.eq span:nth-child(3){height:26px;animation-delay:.04s}
+.eq span:nth-child(4){height:16px;animation-delay:.22s}
+.eq span:nth-child(5){height:7px;animation-delay:.09s}
+@keyframes eq{0%,100%{transform:scaleY(.28);opacity:.35}50%{transform:scaleY(1);opacity:1}}
+#prog-label{font-size:15px;font-weight:500;color:var(--t1);margin-bottom:14px}
+.bar-bg{width:100%;height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .35s ease;width:0%}
+#prog-pct{font-size:12px;color:var(--t2);margin-top:8px}
+
+/* Download card — clean, no player inside */
+#dl-card{display:none;animation:fadeUp .28s cubic-bezier(.25,1,.5,1) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.dl-inner{padding:18px 16px}
+.dl-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+.dl-check{
+  width:44px;height:44px;border-radius:11px;flex-shrink:0;
+  background:rgba(48,209,88,.14);
+  display:flex;align-items:center;justify-content:center;
+}
+[data-theme="light"] .dl-check{background:rgba(52,199,89,.14)}
+.dl-copy strong{font-size:15px;font-weight:600;color:var(--t1);display:block}
+.dl-copy span{font-size:13px;color:var(--t2);margin-top:2px;display:block}
+#dl-btn{
+  display:block;width:100%;padding:14px;
+  background:var(--success);border:none;border-radius:10px;
+  color:#fff;font-family:inherit;font-size:16px;font-weight:600;
+  text-align:center;text-decoration:none;
+  margin-bottom:10px;transition:opacity .15s;cursor:pointer;
+}
+#dl-btn:active{opacity:.82}
+#reset-btn{
+  display:block;width:100%;text-align:center;
+  background:none;border:none;color:var(--accent);
+  font-family:inherit;font-size:16px;cursor:pointer;padding:7px;
+}
+
+/* ══════════════════════════════════════════════
+   MINI PLAYER  —  fixed bottom bar, Apple Music style
+   ══════════════════════════════════════════════ */
+#mini-player{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--s1);
+  border-top:.5px solid var(--sep);
+  /* iPhone home indicator */
+  padding-bottom:env(safe-area-inset-bottom);
+  z-index:200;
+  display:none;
+  animation:riseUp .38s cubic-bezier(.25,1,.5,1) both;
+  transition:background-color .22s;
+}
+@keyframes riseUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* Thin progress line across very top of the bar */
+.mp-progress{
+  width:100%;height:2px;background:var(--s3);
+  position:relative;overflow:hidden;
+}
+.mp-progress-fill{
+  height:100%;background:var(--accent);
+  width:0%;transition:width .6s linear;
+}
+
+/* Main row */
+.mp-row{
+  display:flex;align-items:center;
+  padding:10px 16px 12px;
+  gap:0;
+}
+
+/* Left — thumbnail + song info */
+.mp-left{
+  flex:1;min-width:0;
+  display:flex;align-items:center;gap:11px;
+}
+#mp-thumb{
+  width:44px;height:44px;border-radius:8px;
+  object-fit:cover;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+.mp-meta{min-width:0}
+#mp-title{
+  font-size:13px;font-weight:600;color:var(--t1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#mp-sub{
+  font-size:11px;color:var(--t2);margin-top:2px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* Center — controls */
+.mp-controls{
+  display:flex;align-items:center;gap:24px;
+  flex-shrink:0;padding:0 20px;
+}
+.mp-ctrl-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--t2);padding:4px;
+  display:flex;align-items:center;justify-content:center;
+  transition:color .12s,transform .1s;
+  -webkit-user-select:none;user-select:none;
+}
+.mp-ctrl-btn:active{transform:scale(.85);color:var(--t1)}
+
+#mp-play-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--t1);padding:4px;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .1s;
+  -webkit-user-select:none;user-select:none;
+}
+#mp-play-btn:active{transform:scale(.85)}
+
+/* Right — download icon */
+.mp-right{flex-shrink:0}
+.mp-dl-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--s2);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--t2);text-decoration:none;
+  transition:background-color .15s,color .15s;
+}
+.mp-dl-btn:active{background:var(--s3);color:var(--t1)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>Key Shifter</h1>
+      <p>Karaoke transposer</p>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+      <svg id="ico-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="ico-sun"  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+
+  <!-- URL -->
+  <div class="sec">
+    <div class="sec-lbl">YouTube link</div>
+    <div class="card">
+      <div class="url-row">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <input type="url" id="url" placeholder="Paste YouTube link" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="preview">
+        <div class="art-bg" id="art-bg"></div>
+        <div class="preview-inner">
+          <img id="thumb" src="" alt="">
+          <div class="song-meta">
+            <div id="preview-title"></div>
+            <div id="preview-sub"></div>
+          </div>
+        </div>
+      </div>
+      <div id="err"></div>
+    </div>
+  </div>
+
+  <!-- Key change -->
+  <div class="sec">
+    <div class="sec-lbl">Key change</div>
+    <div class="card">
+      <div class="st-outer"><div class="st-row" id="st-row"></div></div>
+      <div class="st-foot" id="st-foot">2 semitones lower — a common starting point</div>
+    </div>
+  </div>
+
+  <!-- Format -->
+  <div class="sec">
+    <div class="sec-lbl">Format</div>
+    <div class="card">
+      <div class="seg-wrap">
+        <div class="seg">
+          <button class="seg-btn on" data-fmt="mp3" onclick="selFmt('mp3')">MP3 <small>Audio only</small></button>
+          <button class="seg-btn"    data-fmt="mp4" onclick="selFmt('mp4')">MP4 <small>Video + audio</small></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button id="go" onclick="submit()" disabled>Shift &amp; Download</button>
+
+  <!-- Progress -->
+  <div class="card" id="prog-card">
+    <div class="prog-inner">
+      <div class="eq"><span></span><span></span><span></span><span></span><span></span></div>
+      <div id="prog-label">Starting…</div>
+      <div class="bar-bg"><div class="bar-fill" id="bar"></div></div>
+      <div id="prog-pct">0%</div>
+    </div>
+  </div>
+
+  <!-- Download card — clean, player lives at the bottom -->
+  <div class="card" id="dl-card">
+    <div class="dl-inner">
+      <div class="dl-head">
+        <div class="dl-check">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="dl-copy">
+          <strong>Your track is ready</strong>
+          <span id="dl-sub">Playing below — download when you're happy</span>
+        </div>
+      </div>
+      <a id="dl-btn" href="#" download>Download</a>
+      <button id="reset-btn" onclick="reset()">Start over</button>
+    </div>
+  </div>
+
+</div><!-- .wrap -->
+
+<!-- ══════════════════════ MINI PLAYER (fixed bottom) ══════════════════════ -->
+<div id="mini-player">
+
+  <!-- 2px progress line -->
+  <div class="mp-progress">
+    <div class="mp-progress-fill" id="mp-fill"></div>
+  </div>
+
+  <div class="mp-row">
+
+    <!-- Left: art + info -->
+    <div class="mp-left">
+      <img id="mp-thumb" src="" alt="">
+      <div class="mp-meta">
+        <div id="mp-title">—</div>
+        <div id="mp-sub">0:00 / --:--</div>
+      </div>
+    </div>
+
+    <!-- Center: skip back · play/pause · skip forward -->
+    <div class="mp-controls">
+
+      <button class="mp-ctrl-btn" onclick="skip(-15)" aria-label="Skip back 15 seconds">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 .49-3.32"/>
+          <text x="12" y="14.5" font-size="5" font-family="-apple-system,sans-serif" fill="currentColor" stroke="none" font-weight="700" text-anchor="middle">15</text>
+        </svg>
+      </button>
+
+      <button id="mp-play-btn" onclick="togglePlay()" aria-label="Play">
+        <svg id="mp-ico-play" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg id="mp-ico-pause" width="30" height="30" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:none"><rect x="6" y="4" width="4" height="16" rx="1.5"/><rect x="14" y="4" width="4" height="16" rx="1.5"/></svg>
+      </button>
+
+      <button class="mp-ctrl-btn" onclick="skip(15)" aria-label="Skip forward 15 seconds">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-.49-3.32"/>
+          <text x="12" y="14.5" font-size="5" font-family="-apple-system,sans-serif" fill="currentColor" stroke="none" font-weight="700" text-anchor="middle">15</text>
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- Right: download icon -->
+    <div class="mp-right">
+      <a id="mp-dl-btn" class="mp-dl-btn" href="#" download aria-label="Download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<!-- Hidden audio element -->
+<audio id="audio" preload="metadata" style="display:none"></audio>
+
+<script>
+const ST = [-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6];
+const HINTS = {
+  '-6':'6 semitones lower — half an octave down',
+  '-5':'5 semitones lower',
+  '-4':'4 semitones lower — a major third down',
+  '-3':'3 semitones lower — a minor third down',
+  '-2':'2 semitones lower — a common starting point',
+  '-1':'1 semitone lower',
+   '0':'Original key — no pitch change',
+   '1':'1 semitone higher',
+   '2':'2 semitones higher',
+   '3':'3 semitones higher — a minor third up',
+   '4':'4 semitones higher — a major third up',
+   '5':'5 semitones higher',
+   '6':'6 semitones higher — half an octave up'
+};
+
+let semitones = -2, fmt = 'mp3';
+let pollId = null, infoId = null;
+let currentTitle = '';
+
+// ── Semitone strip ─────────────────────────────────────────────────────
+const row = document.getElementById('st-row');
+ST.forEach(s => {
+  const b = document.createElement('button');
+  b.className = 'st-btn' + (s === semitones ? ' on' : '');
+  b.textContent = s > 0 ? '+' + s : '' + s;
+  b.onclick = () => {
+    semitones = s;
+    document.querySelectorAll('.st-btn').forEach((x,i) => x.classList.toggle('on', ST[i] === s));
+    document.getElementById('st-foot').textContent = HINTS[String(s)] || '';
+    b.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  };
+  row.appendChild(b);
+});
+setTimeout(() => {
+  const on = row.querySelector('.on');
+  if (on) on.scrollIntoView({behavior:'instant',block:'nearest',inline:'center'});
+}, 80);
+
+// ── Format ─────────────────────────────────────────────────────────────
+function selFmt(f) {
+  fmt = f;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('on', b.dataset.fmt === f));
+}
+
+// ── Theme ──────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+  document.getElementById('ico-moon').style.display = dark ? 'none' : '';
+  document.getElementById('ico-sun').style.display  = dark ? ''     : 'none';
+  try { localStorage.setItem('ks-theme', document.documentElement.dataset.theme); } catch(e) {}
+}
+(function(){
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.getElementById('ico-moon').style.display = dark ? '' : 'none';
+  document.getElementById('ico-sun').style.display  = dark ? 'none' : '';
+})();
+
+// ── URL → preview ──────────────────────────────────────────────────────
+const urlEl = document.getElementById('url');
+urlEl.addEventListener('input', () => {
+  clearTimeout(infoId);
+  const v = urlEl.value.trim();
+  if (!v.includes('youtube') && !v.includes('youtu.be')) { hidePreview(); return; }
+  infoId = setTimeout(() => fetchInfo(v), 650);
+});
+
+async function fetchInfo(url) {
+  setErr('');
+  try {
+    const r = await fetch('/info?url=' + encodeURIComponent(url));
+    if (!r.ok) throw new Error((await r.json()).detail || 'Could not load video');
+    const d = await r.json();
+    currentTitle = d.title;
+    document.getElementById('art-bg').style.backgroundImage = 'url("' + d.thumbnail + '")';
+    document.getElementById('thumb').src = d.thumbnail;
+    document.getElementById('preview-title').textContent = d.title;
+    document.getElementById('preview-sub').textContent = d.channel + ' · ' + d.duration;
+    document.getElementById('preview').style.display = 'block';
+    document.getElementById('go').disabled = false;
+  } catch(e) { hidePreview(); setErr(e.message); }
+}
+
+function hidePreview() {
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('go').disabled = true;
+}
+
+// ── Submit ─────────────────────────────────────────────────────────────
+async function submit() {
+  if (!urlEl.value.trim()) return;
+  setUI('running');
+  try {
+    const r = await fetch('/jobs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url:urlEl.value.trim(), semitones, format:fmt})
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || 'Failed to start');
+    poll((await r.json()).job_id);
+  } catch(e) { setErr(e.message); setUI('idle'); }
+}
+
+function poll(id) {
+  const LBL = {queued:'Waiting in queue',downloading:'Downloading from YouTube',processing:'Shifting pitch',done:'Done'};
+  pollId = setInterval(async () => {
+    try {
+      const j = await (await fetch('/status/' + id)).json();
+      document.getElementById('bar').style.width = j.progress + '%';
+      document.getElementById('prog-pct').textContent = j.progress + '%';
+      document.getElementById('prog-label').textContent = LBL[j.status] || j.status;
+      if (j.status === 'done')  { clearInterval(pollId); showDl(id); }
+      if (j.status === 'error') { clearInterval(pollId); setErr(j.error || 'Error'); setUI('idle'); }
+    } catch { clearInterval(pollId); setErr('Lost connection'); setUI('idle'); }
+  }, 2000);
+}
+
+// ── Show download state + boot mini player ─────────────────────────────
+function showDl(id) {
+  const ext = fmt.toUpperCase();
+
+  // Update download card
+  const btn = document.getElementById('dl-btn');
+  btn.href = '/download/' + id;
+  btn.download = 'karaoke.' + fmt;
+  btn.textContent = 'Download ' + ext;
+
+  document.getElementById('prog-card').style.display = 'none';
+  document.getElementById('dl-card').style.display   = 'block';
+
+  // Boot the mini player
+  const thumbSrc = document.getElementById('thumb').src;
+  document.getElementById('mp-thumb').src = thumbSrc;
+  document.getElementById('mp-title').textContent = currentTitle;
+
+  const mpDl = document.getElementById('mp-dl-btn');
+  mpDl.href = '/download/' + id;
+  mpDl.download = 'karaoke.' + fmt;
+
+  // Wire audio
+  audio.src = '/stream/' + id;
+  audio.load();
+
+  // Show the mini player (animation handled by CSS)
+  const mp = document.getElementById('mini-player');
+  mp.style.display = 'block';
+  // Trigger reflow so animation replays each time
+  void mp.offsetWidth;
+  mp.style.animation = 'none';
+  void mp.offsetWidth;
+  mp.style.animation = '';
+}
+
+// ── Audio element ──────────────────────────────────────────────────────
+const audio = document.getElementById('audio');
+
+function fmtTime(s) {
+  if (!s || isNaN(s)) return '--:--';
+  return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
+}
+
+audio.addEventListener('loadedmetadata', updateTimeDisplay);
+
+audio.addEventListener('timeupdate', () => {
+  updateTimeDisplay();
+  const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+  document.getElementById('mp-fill').style.width = pct + '%';
+});
+
+function updateTimeDisplay() {
+  document.getElementById('mp-sub').textContent =
+    fmtTime(audio.currentTime) + ' / ' + fmtTime(audio.duration);
+}
+
+audio.addEventListener('play',  () => {
+  document.getElementById('mp-ico-play').style.display  = 'none';
+  document.getElementById('mp-ico-pause').style.display = '';
+});
+audio.addEventListener('pause', () => {
+  document.getElementById('mp-ico-play').style.display  = '';
+  document.getElementById('mp-ico-pause').style.display = 'none';
+});
+audio.addEventListener('ended', () => {
+  document.getElementById('mp-ico-play').style.display  = '';
+  document.getElementById('mp-ico-pause').style.display = 'none';
+  document.getElementById('mp-fill').style.width = '100%';
+});
+
+function togglePlay() {
+  if (audio.paused) audio.play();
+  else audio.pause();
+}
+
+function skip(secs) {
+  if (!audio.duration) return;
+  audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + secs));
+}
+
+// ── UI state ───────────────────────────────────────────────────────────
+function setUI(state) {
+  const running = state === 'running';
+  const go = document.getElementById('go');
+  go.disabled = running;
+  go.style.display = running ? 'none' : '';
+  document.getElementById('prog-card').style.display = running ? 'block' : 'none';
+  document.getElementById('dl-card').style.display   = 'none';
+  if (running) {
+    document.getElementById('bar').style.width = '0%';
+    document.getElementById('prog-pct').textContent = '0%';
+    document.getElementById('prog-label').textContent = 'Starting…';
+  }
+}
+
+function setErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function reset() {
+  clearInterval(pollId);
+  // Stop and reset audio
+  audio.pause();
+  audio.src = '';
+  document.getElementById('mp-ico-play').style.display  = '';
+  document.getElementById('mp-ico-pause').style.display = 'none';
+  document.getElementById('mp-fill').style.width = '0%';
+  document.getElementById('mp-sub').textContent = '0:00 / --:--';
+  // Hide mini player
+  document.getElementById('mini-player').style.display = 'none';
+  // Reset form
+  urlEl.value = '';
+  currentTitle = '';
+  hidePreview();
+  setErr('');
+  setUI('idle');
+}
+</script>
+</body>
+</html>

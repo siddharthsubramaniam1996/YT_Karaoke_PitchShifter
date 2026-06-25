@@ -1,0 +1,15 @@
+{
+  "name": "Karaoke Key Shifter",
+  "short_name": "Karaoke",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ff375f",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
