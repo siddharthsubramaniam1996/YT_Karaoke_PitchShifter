@@ -150,6 +150,55 @@ async def refresh_cookies():
     return {"ok": True, "cookie_file_present": os.path.exists(COOKIE_PATH)}
 
 
+@app.get("/admin/yt-debug")
+async def yt_debug():
+    """Quick diagnostic: try yt-dlp info with verbose output captured."""
+    import io, yt_dlp, subprocess, os
+    from yt_dlp.networking.impersonate import ImpersonateTarget
+
+    buf = io.StringIO()
+
+    class _BufLogger:
+        def debug(self, m): buf.write(f"[D] {m}\n")
+        def info(self, m):  buf.write(f"[I] {m}\n")
+        def warning(self, m): buf.write(f"[W] {m}\n")
+        def error(self, m):   buf.write(f"[E] {m}\n")
+
+    BGUTIL_URL = "http://127.0.0.1:4416"
+    COOKIE_PATH = "/tmp/yt-cookies.txt"
+
+    node_ver = subprocess.run(["node", "--version"], capture_output=True, text=True).stdout.strip()
+
+    opts = {
+        "quiet": True,
+        "skip_download": True,
+        "logger": _BufLogger(),
+        "socket_timeout": 15,
+        "remote_components": {"ejs:github"},
+        "js_runtimes": {"node": {}},
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["web"],
+                "getpot_bgutil_baseurl": [BGUTIL_URL],
+            }
+        },
+    }
+    if os.path.exists(COOKIE_PATH):
+        opts["cookiefile"] = COOKIE_PATH
+
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info("https://www.youtube.com/watch?v=jNQXAC9IVRw", download=False)
+        result = {"ok": True, "title": info.get("title"), "formats": len(info.get("formats", []))}
+    except Exception as e:
+        result = {"ok": False, "error": str(e)[:500]}
+
+    result["node_version"] = node_ver
+    result["cookie_present"] = os.path.exists(COOKIE_PATH)
+    result["log_tail"] = buf.getvalue()[-2000:]
+    return result
+
+
 @app.get("/health")
 async def health():
     return {"ok": True}
