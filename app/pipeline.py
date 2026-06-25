@@ -56,6 +56,7 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
+                "player_client": ["web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
@@ -149,6 +150,7 @@ def get_video_info(url: str) -> dict:
         "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
+                "player_client": ["web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
