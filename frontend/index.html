@@ -64,6 +64,15 @@ input[type="url"]{
   caret-color:var(--accent);padding:0;
 }
 input[type="url"]::placeholder{color:var(--t3)}
+.url-clear{
+  display:none;align-items:center;justify-content:center;
+  flex-shrink:0;width:20px;height:20px;
+  background:var(--s3);border:none;border-radius:50%;
+  cursor:pointer;color:var(--t2);padding:0;
+  transition:background-color .15s,color .15s;
+}
+.url-clear.visible{display:flex}
+.url-clear:active{background:var(--sep);color:var(--t1)}
 
 /* Ambient preview */
 #preview{
@@ -285,6 +294,9 @@ input[type="url"]::placeholder{color:var(--t3)}
       <div class="url-row">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         <input type="url" id="url" placeholder="Paste YouTube link" autocomplete="off" spellcheck="false">
+        <button class="url-clear" id="url-clear" onclick="clearUrl()" aria-label="Clear">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
       </div>
       <div id="preview">
         <div class="art-bg" id="art-bg"></div>
@@ -478,9 +490,21 @@ function toggleTheme() {
 
 // ── URL → preview ──────────────────────────────────────────────────────
 const urlEl = document.getElementById('url');
+const clearBtn = document.getElementById('url-clear');
+
+function clearUrl() {
+  urlEl.value = '';
+  clearTimeout(infoId);
+  hidePreview();
+  setErr('');
+  clearBtn.classList.remove('visible');
+  document.getElementById('go').disabled = true;
+}
+
 urlEl.addEventListener('input', () => {
   clearTimeout(infoId);
   const v = urlEl.value.trim();
+  clearBtn.classList.toggle('visible', v.length > 0);
   if (!v.includes('youtube') && !v.includes('youtu.be')) { hidePreview(); return; }
   document.getElementById('go').disabled = false;
   infoId = setTimeout(() => fetchInfo(v), 650);
@@ -652,6 +676,7 @@ function reset() {
   // Reset form
   urlEl.value = '';
   currentTitle = '';
+  clearBtn.classList.remove('visible');
   hidePreview();
   setErr('');
   setUI('idle');
