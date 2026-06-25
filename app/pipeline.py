@@ -5,6 +5,29 @@ from yt_dlp.networking.impersonate import ImpersonateTarget
 
 TMP_BASE = "/tmp/karaoke"
 BGUTIL_URL = "http://127.0.0.1:4416"
+COOKIE_PATH = "/tmp/yt-cookies.txt"
+
+
+def _cookie_opt() -> dict:
+    return {"cookiefile": COOKIE_PATH} if os.path.exists(COOKIE_PATH) else {}
+
+
+def _auth_opts() -> dict:
+    """Return OAuth2 opts when the token is ready, else fall back to cookies."""
+    try:
+        from app.oauth import is_ready
+        if is_ready():
+            return {"username": "oauth2", "password": ""}
+    except Exception:
+        pass
+    return _cookie_opt()
+
+
+_BOT_PHRASES = ("sign in to confirm", "not a bot", "confirm you're not")
+
+def _is_bot_error(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return any(p in msg for p in _BOT_PHRASES)
 
 
 def semitones_to_ratio(semitones: int) -> float:
@@ -34,12 +57,31 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "extractor_args": {
             "youtube": {
                 "player_client": ["ios", "web"],
+                "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
+        **_auth_opts(),
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+    except Exception as e:
+        if not _is_bot_error(e):
+            raise
+        # bgutil didn't resolve the bot check — retry with OAuth2 if the token
+        # is on disk (e.g. restored from HF secret but is_ready() not yet set)
+        from app.oauth import TOKEN_PATH
+        if os.path.exists(TOKEN_PATH):
+            retry_opts = {**ydl_opts, "username": "oauth2", "password": ""}
+            retry_opts.pop("cookiefile", None)
+            with yt_dlp.YoutubeDL(retry_opts) as ydl:
+                ydl.download([url])
+        else:
+            raise RuntimeError(
+                "YouTube is blocking this request. "
+                "Open the ☰ menu and tap 'Authorize YouTube' to fix this permanently."
+            ) from None
 
     # yt-dlp occasionally produces .mkv — normalise to .mp4
     src = os.path.join(tmp_dir, "src.mp4")
@@ -109,8 +151,10 @@ def get_video_info(url: str) -> dict:
         "extractor_args": {
             "youtube": {
                 "player_client": ["ios", "web"],
+                "getpot_bgutil_baseurl": [BGUTIL_URL],
             }
         },
+        **_auth_opts(),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
