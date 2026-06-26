@@ -18,11 +18,10 @@ docker build -t karaoke .
 docker run -p 80:80 karaoke
 ```
 
-To publish an update to Docker Hub:
+To publish an update to GitHub + Docker Hub:
 
 ```bash
-docker build -t siddharths96/karaoke .
-docker push siddharths96/karaoke
+./ship.sh
 ```
 
 ## Deploying to Akshaya's machine
