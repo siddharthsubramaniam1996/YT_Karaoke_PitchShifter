@@ -24,12 +24,13 @@ No accounts. No subscriptions. No ads.
 
 **One-time setup:**
 1. Install [Docker Desktop](https://docker.com/products/docker-desktop) and restart your PC
-2. Rename your PC to `akshaya` — Start → Settings → System → About → Rename this PC → Restart
+2. Rename your PC to something short and memorable — e.g. `karaoke` or your own name. Start → Settings → System → About → Rename this PC → Restart
 3. Download [start.bat](https://raw.githubusercontent.com/siddharthsubramaniam1996/YT_Karaoke_PitchShifter/master/start.bat) and save it to your Desktop
 
 **Every time:**
 - Double-click `start.bat`
-- Open `http://akshaya.local` on any device on the same WiFi
+- The window will print your exact iPhone URL based on your PC name — e.g. `http://karaoke.local`
+- Open that URL on any device on the same WiFi
 - Close the black window when done
 
 > **iPhone tip:** Safari → share button → Add to Home Screen to make it feel like a native app.
