@@ -56,7 +56,8 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
             "youtube": {
                 "player_client": ["web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
-            }
+            },
+            "youtubetab": {"skip": ["authcheck"]},
         },
         **_auth_opts(),
     }
@@ -149,7 +150,8 @@ def get_video_info(url: str) -> dict:
             "youtube": {
                 "player_client": ["web"],
                 "getpot_bgutil_baseurl": [BGUTIL_URL],
-            }
+            },
+            "youtubetab": {"skip": ["authcheck"]},
         },
         **_auth_opts(),
     }
