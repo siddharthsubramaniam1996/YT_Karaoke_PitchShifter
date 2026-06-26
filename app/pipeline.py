@@ -1,9 +1,16 @@
 import os
 import subprocess
 import yt_dlp
+from urllib.parse import urlparse, urlencode, parse_qsl
 
 TMP_BASE = "/tmp/karaoke"
 COOKIE_PATH = "/tmp/yt-cookies.txt"
+
+
+def _strip_list_param(url: str) -> str:
+    p = urlparse(url)
+    qs = urlencode([(k, v) for k, v in parse_qsl(p.query) if k != "list"])
+    return p._replace(query=qs).geturl()
 
 
 def _cookie_opt() -> dict:
@@ -25,6 +32,7 @@ def get_tmp_dir(job_id: str) -> str:
 
 
 def download_video(url: str, job_id: str, progress_hook) -> str:
+    url = _strip_list_param(url)
     tmp_dir = get_tmp_dir(job_id)
 
     ydl_opts = {
@@ -96,6 +104,7 @@ def pitch_shift(src_path: str, semitones: int, fmt: str, job_id: str) -> str:
 
 
 def get_video_info(url: str) -> dict:
+    url = _strip_list_param(url)
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
