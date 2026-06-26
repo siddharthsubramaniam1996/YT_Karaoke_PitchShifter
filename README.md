@@ -29,7 +29,7 @@ No accounts. No subscriptions. No ads.
 
 **Every time:**
 - Double-click `start.bat`
-- The window will print your exact iPhone URL based on your PC name — e.g. `http://karaoke.local`
+- The window will print your exact iPhone URL based on your PC name — e.g. `http://karaoke.local`. If you haven't renamed your PC, Windows defaults to something like `http://DESKTOP-A1B2C3.local` which works but is harder to type — renaming is recommended
 - Open that URL on any device on the same WiFi
 - Close the black window when done
 
