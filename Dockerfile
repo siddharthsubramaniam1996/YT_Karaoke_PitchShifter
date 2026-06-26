@@ -9,11 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Node.js 22+ required by yt-dlp n-challenge solver (min version 22.0.0)
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
-
 # Verify rubberband filter is present in this ffmpeg build
 RUN ffmpeg -filters 2>/dev/null | grep -q rubberband || \
     (echo "ERROR: rubberband not found in ffmpeg" && exit 1)
