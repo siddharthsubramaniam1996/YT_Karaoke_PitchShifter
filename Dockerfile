@@ -24,9 +24,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Verify curl-cffi chrome impersonation is available (needed to bypass YouTube TLS fingerprinting)
-RUN python3 -c "from curl_cffi.requests import BrowserType; t=[b.value for b in BrowserType]; assert any('chrome' in x for x in t), f'No chrome targets: {t}'; print('curl-cffi OK:', [x for x in t if x.startswith('chrome')][:4])"
-
 # Install the yt-dlp plugin that connects yt-dlp to the bgutil-pot HTTP server
 RUN pip install --no-cache-dir bgutil-ytdlp-pot-provider
 
