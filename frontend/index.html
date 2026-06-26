@@ -378,36 +378,6 @@ input[type="url"]::placeholder{color:var(--t3)}
       </div>
     </button>
 
-    <button class="nav-item" id="nav-auth" onclick="startOAuth()">
-      <div class="nav-icon" id="auth-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 8 12 12 14 14"/>
-        </svg>
-      </div>
-      <div class="nav-text">
-        <span class="nav-label" id="auth-label">Authorize YouTube</span>
-        <span class="nav-sub"  id="auth-sub">One-time setup · no cookies needed</span>
-      </div>
-    </button>
-
-    <!-- Device code panel — shown when needs_auth -->
-    <div id="auth-code-panel" style="display:none;margin:4px 16px 8px;padding:14px;background:var(--s2);border-radius:10px;">
-      <div style="font-size:12px;color:var(--t2);margin-bottom:8px;line-height:1.5">
-        Open <a id="auth-url-link" href="https://www.youtube.com/activate" target="_blank" style="color:var(--accent);text-decoration:none">youtube.com/activate</a> and enter this code:
-      </div>
-      <div id="auth-code-display" style="font-size:22px;font-weight:700;letter-spacing:.12em;color:var(--t1);text-align:center;padding:8px 0"></div>
-      <div style="font-size:11px;color:var(--t2);text-align:center;margin-top:6px">Waiting for authorization…</div>
-    </div>
-
-    <!-- Save-token hint — shown after done -->
-    <div id="auth-save-panel" style="display:none;margin:4px 16px 8px;padding:14px;background:var(--s2);border-radius:10px;">
-      <div style="font-size:12px;color:var(--t2);margin-bottom:8px;line-height:1.5">
-        To survive Space restarts, save this token as <strong style="color:var(--t1)">YT_OAUTH2_TOKEN</strong> in HF Space secrets:
-      </div>
-      <button onclick="copyToken()" style="width:100%;padding:9px;border:none;border-radius:8px;background:var(--s3);color:var(--t1);font-family:inherit;font-size:13px;cursor:pointer;">Copy token</button>
-    </div>
-
   </nav>
 </div>
 
@@ -487,10 +457,6 @@ input[type="url"]::placeholder{color:var(--t3)}
       </div>
 
       <button id="go" onclick="submit()" disabled>Shift &amp; Download</button>
-
-      <p style="font-size:12px;color:var(--t3);text-align:center;margin-top:14px;line-height:1.6">
-        For reliable downloads, do the one-time <button onclick="openSidebar()" style="background:none;border:none;color:var(--accent);font-size:12px;font-family:inherit;cursor:pointer;padding:0;text-decoration:underline">Authorize YouTube</button> setup in the ☰ menu.
-      </p>
 
     </div><!-- .col-left -->
 
@@ -664,97 +630,6 @@ function closeSidebar() {
 function navHome() {
   closeSidebar();
 }
-
-// ── OAuth flow ─────────────────────────────────────────────────────────
-let _oauthPollId = null;
-
-function _applyOAuthState(d) {
-  const label      = document.getElementById('auth-label');
-  const sub        = document.getElementById('auth-sub');
-  const icon       = document.getElementById('auth-icon');
-  const codePanel  = document.getElementById('auth-code-panel');
-  const savePanel  = document.getElementById('auth-save-panel');
-  const codeDisp   = document.getElementById('auth-code-display');
-
-  codePanel.style.display = 'none';
-  savePanel.style.display = 'none';
-
-  if (d.status === 'idle') {
-    label.textContent = 'Authorize YouTube';
-    sub.textContent   = 'One-time setup · no cookies needed';
-    icon.innerHTML    = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>';
-  } else if (d.status === 'running') {
-    label.textContent = 'Connecting…';
-    sub.textContent   = 'Talking to YouTube';
-    icon.innerHTML    = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>';
-  } else if (d.status === 'needs_auth') {
-    label.textContent = 'Enter code';
-    sub.textContent   = 'Open youtube.com/activate';
-    icon.innerHTML    = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
-    codePanel.style.display = 'block';
-    codeDisp.textContent = d.code || '—';
-    const link = document.getElementById('auth-url-link');
-    if (d.url) link.href = d.url;
-  } else if (d.status === 'done') {
-    label.textContent = 'Authorized';
-    sub.textContent   = 'Downloads unlocked';
-    icon.innerHTML    = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-    savePanel.style.display = 'block';
-    if (_oauthPollId) { clearInterval(_oauthPollId); _oauthPollId = null; }
-  } else if (d.status === 'error') {
-    label.textContent = 'Auth failed';
-    sub.textContent   = d.message || 'Try again';
-    icon.innerHTML    = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
-    if (_oauthPollId) { clearInterval(_oauthPollId); _oauthPollId = null; }
-  }
-}
-
-async function startOAuth() {
-  const btn = document.getElementById('nav-auth');
-  btn.disabled = true;
-  try {
-    const r = await fetch('/admin/oauth2/start', {method: 'POST'});
-    const d = await r.json();
-    _applyOAuthState(d);
-    if (d.status !== 'done' && d.status !== 'error') {
-      _oauthPollId = setInterval(async () => {
-        try {
-          const r2 = await fetch('/admin/oauth2/status');
-          const d2 = await r2.json();
-          _applyOAuthState(d2);
-        } catch(_) {}
-      }, 2000);
-    }
-  } catch(e) {
-    document.getElementById('auth-sub').textContent = e.message || 'Network error';
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function copyToken() {
-  try {
-    const r = await fetch('/admin/oauth2/token');
-    if (!r.ok) { alert('No token yet — complete authorization first'); return; }
-    const d = await r.json();
-    await navigator.clipboard.writeText(d.token_b64);
-    const btn = event.currentTarget;
-    const orig = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 2000);
-  } catch(e) {
-    alert('Copy failed: ' + (e.message || e));
-  }
-}
-
-// On load, check current OAuth status without starting the flow
-(async () => {
-  try {
-    const r = await fetch('/admin/oauth2/status');
-    const d = await r.json();
-    if (d.status !== 'idle') _applyOAuthState(d);
-  } catch(_) {}
-})();
 
 // ── URL → preview ──────────────────────────────────────────────────────
 const urlEl = document.getElementById('url');
@@ -931,11 +806,7 @@ function setErr(msg) {
   if (!msg) { el.innerHTML = ''; el.style.display = 'none'; return; }
   const isBot = /sign in|not a bot|authorize youtube|blocking this request/i.test(msg);
   if (isBot) {
-    el.innerHTML = msg.replace(/\n/g, '<br>') +
-      '<br><span style="display:inline-block;margin-top:6px">' +
-      '→ <button onclick="openSidebar()" style="background:none;border:none;' +
-      'color:var(--accent);font-size:13px;cursor:pointer;padding:0;font-family:inherit">' +
-      'Authorize YouTube</button> in the ☰ menu for a permanent fix.</span>';
+    el.textContent = msg + ' Please try again in a few minutes.';
   } else {
     el.textContent = msg;
   }
