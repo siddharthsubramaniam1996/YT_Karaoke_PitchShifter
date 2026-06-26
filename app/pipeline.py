@@ -35,6 +35,7 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
     url = _strip_list_param(url)
     tmp_dir = get_tmp_dir(job_id)
 
+    proxy = os.environ.get("YTDLP_PROXY", "")
     ydl_opts = {
         "format": "bestvideo+bestaudio/bestvideo/best",
         "merge_output_format": "mp4",
@@ -46,7 +47,7 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
             "youtube": {"player_client": ["ios"]},
             "youtubetab": {"skip": ["authcheck"]},
         },
-        **_auth_opts(),
+        **(_auth_opts() | ({"proxy": proxy} if proxy else {})),
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -105,6 +106,7 @@ def pitch_shift(src_path: str, semitones: int, fmt: str, job_id: str) -> str:
 
 def get_video_info(url: str) -> dict:
     url = _strip_list_param(url)
+    proxy = os.environ.get("YTDLP_PROXY", "")
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
@@ -113,7 +115,7 @@ def get_video_info(url: str) -> dict:
             "youtube": {"player_client": ["ios"]},
             "youtubetab": {"skip": ["authcheck"]},
         },
-        **_auth_opts(),
+        **(_auth_opts() | ({"proxy": proxy} if proxy else {})),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
