@@ -9,7 +9,6 @@ from pydantic import BaseModel
 
 from app.worker import create_job, get_job, enqueue, start_worker
 from app.pipeline import get_video_info
-import app.oauth as oauth
 
 COOKIE_PATH = "/tmp/yt-cookies.txt"
 
@@ -26,16 +25,9 @@ def _write_cookies():
         print(f"[startup] failed to write YT cookies: {e}")
 
 
-def _restore_oauth_token():
-    raw = os.environ.get("YT_OAUTH2_TOKEN", "").strip()
-    if raw:
-        oauth.restore_token(raw)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _write_cookies()
-    _restore_oauth_token()
     start_worker()
     yield
 
@@ -47,8 +39,8 @@ app.mount("/static", StaticFiles(directory="/app/frontend"), name="static")
 
 class JobRequest(BaseModel):
     url: str
-    semitones: int   # -12 to +12
-    format: str      # "mp3" or "mp4"
+    semitones: int
+    format: str
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -119,30 +111,6 @@ async def stream_file(job_id: str):
     mime = "audio/mpeg" if job["format"] == "mp3" else "video/mp4"
     return FileResponse(path, media_type=mime)
 
-
-# ── Admin: OAuth2 device flow ──────────────────────────────────────────
-
-@app.post("/admin/oauth2/start")
-async def oauth2_start():
-    oauth.start()
-    return oauth.get_state()
-
-
-@app.get("/admin/oauth2/status")
-async def oauth2_status():
-    return oauth.get_state()
-
-
-@app.get("/admin/oauth2/token")
-async def oauth2_export_token():
-    """Return the token file base64-encoded so the user can save it as an HF secret."""
-    b64 = oauth.read_token_b64()
-    if not b64:
-        raise HTTPException(status_code=404, detail="No token on disk yet")
-    return {"token_b64": b64}
-
-
-# ── Admin: cookie refresh (legacy) ────────────────────────────────────
 
 @app.get("/admin/refresh-cookies")
 async def refresh_cookies():

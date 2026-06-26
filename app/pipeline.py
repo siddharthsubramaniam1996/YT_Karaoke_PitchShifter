@@ -13,12 +13,13 @@ def _strip_list_param(url: str) -> str:
     return p._replace(query=qs).geturl()
 
 
-def _cookie_opt() -> dict:
-    return {"cookiefile": COOKIE_PATH} if os.path.exists(COOKIE_PATH) else {}
-
-
-def _auth_opts() -> dict:
-    return _cookie_opt()
+def _extra_opts() -> dict:
+    opts = {}
+    if os.path.exists(COOKIE_PATH):
+        opts["cookiefile"] = COOKIE_PATH
+    if proxy := os.environ.get("YTDLP_PROXY", ""):
+        opts["proxy"] = proxy
+    return opts
 
 
 def semitones_to_ratio(semitones: int) -> float:
@@ -35,7 +36,6 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
     url = _strip_list_param(url)
     tmp_dir = get_tmp_dir(job_id)
 
-    proxy = os.environ.get("YTDLP_PROXY", "")
     ydl_opts = {
         "format": "bestvideo+bestaudio/bestvideo/best",
         "merge_output_format": "mp4",
@@ -47,7 +47,7 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
             "youtube": {"player_client": ["ios"]},
             "youtubetab": {"skip": ["authcheck"]},
         },
-        **(_auth_opts() | ({"proxy": proxy} if proxy else {})),
+        **_extra_opts(),
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -106,7 +106,6 @@ def pitch_shift(src_path: str, semitones: int, fmt: str, job_id: str) -> str:
 
 def get_video_info(url: str) -> dict:
     url = _strip_list_param(url)
-    proxy = os.environ.get("YTDLP_PROXY", "")
     ydl_opts = {
         "quiet": True,
         "skip_download": True,
@@ -115,7 +114,7 @@ def get_video_info(url: str) -> dict:
             "youtube": {"player_client": ["ios"]},
             "youtubetab": {"skip": ["authcheck"]},
         },
-        **(_auth_opts() | ({"proxy": proxy} if proxy else {})),
+        **_extra_opts(),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
