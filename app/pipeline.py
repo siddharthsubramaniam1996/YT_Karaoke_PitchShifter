@@ -1,7 +1,6 @@
 import os
 import subprocess
 import yt_dlp
-from yt_dlp.networking.impersonate import ImpersonateTarget
 
 TMP_BASE = "/tmp/karaoke"
 BGUTIL_URL = "http://127.0.0.1:4416"
@@ -53,7 +52,6 @@ def download_video(url: str, job_id: str, progress_hook) -> str:
         "noplaylist": True,
         "max_filesize": 500 * 1024 * 1024,
         "progress_hooks": [progress_hook],
-        "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
                 "player_client": ["web"],
@@ -147,7 +145,6 @@ def get_video_info(url: str) -> dict:
         "quiet": True,
         "skip_download": True,
         "socket_timeout": 15,
-        "impersonate": ImpersonateTarget(client="chrome"),
         "extractor_args": {
             "youtube": {
                 "player_client": ["web"],
