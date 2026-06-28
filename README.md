@@ -1,3 +1,5 @@
+<video src="demo.mp4" autoplay loop muted playsinline style="width:100%;border-radius:12px"></video>
+
 # 🎵 YT Karaoke Pitch Shifter
 
 A simple web app that lets you take any YouTube video, shift its pitch by any number of semitones, and download the result as an MP3 or MP4 — without changing the tempo.
