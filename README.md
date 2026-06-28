@@ -1,4 +1,5 @@
-![Demo](demo.mp4)
+<video src="https://github.com/siddharthsubramaniam1996/YT_Karaoke_PitchShifter/raw/master/demo.mp4" width="600" controls>
+</video>
 
 # 🎵 YT Karaoke Pitch Shifter
 
