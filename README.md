@@ -1,4 +1,4 @@
-<video src="demo.mp4" autoplay loop muted playsinline style="width:100%;border-radius:12px"></video>
+![Demo](demo.mp4)
 
 # 🎵 YT Karaoke Pitch Shifter
 
